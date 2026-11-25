@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: geant-test-local
+spec:
+  template:
+    spec:
+      containers:
+      - name: trainer
+        image: k8s:latest
+        imagePullPolicy: Never
+        
+        env:
+        - name: AGENT_MAX_STEPS
+          value: "200"
+        - name: AGENT_REWARD_SUCCESS
+          value: "10.0"
+        - name: AGENT_PENALTY_MULTIPLIER
+          value: "0.5"
+
+        volumeMounts:
+        - name: results-vol
+          mountPath: /app/results
+        
+        command: ["/app/entrypoint.sh"]
+        args:
+          - "mlagents-learn"
+          - "/app/config.yaml"
+          - "--run-id=k8s"
+          - "--env=/app/game/mysim.x86_64"
+          - "--no-graphics"
+
+      restartPolicy: Never
+      
+      volumes:
+      - name: results-vol
+        hostPath:
+          path: /absolute/path/to/Geant4UnityNaI/results_k8s
+          type: Directory

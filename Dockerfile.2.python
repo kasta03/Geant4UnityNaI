@@ -1,0 +1,28 @@
+# Dockerfile.2.python
+FROM geant-layer-1
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y \
+    python3.9 python3.9-venv python3.9-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y \
+    libgconf-2-4 \
+    libfontconfig1 \
+    libglu1-mesa \
+    libxcursor1 \
+    libxi6 \
+    libxrender1 \
+    libxrandr2 \
+    libxfixes3 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3.9 get-pip.py && rm get-pip.py
+RUN python3.9 -m pip install --no-cache-dir torch==1.13.1 --extra-index-url https://download.pytorch.org/whl/cpu
+RUN python3.9 -m pip install --no-cache-dir protobuf==3.20.3 mlagents==0.30.0 onnx==1.14.1 numpy==1.21.2

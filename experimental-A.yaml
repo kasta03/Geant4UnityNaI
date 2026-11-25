@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geant-experiment-aggressive
+spec:
+  replicas: 50
+  template:
+    spec:
+      containers:
+      - name: unity-geant
+        image: twoj-repo/geant-final:latest
+        env:
+        - name: AGENT_MAX_STEPS
+          value: "2000"
+        - name: AGENT_REWARD_SUCCESS
+          value: "5.0"
+        - name: AGENT_PENALTY_MULTIPLIER
+          value: "0.5"

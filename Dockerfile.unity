@@ -1,0 +1,28 @@
+FROM python-layer-2
+WORKDIR /app
+
+# Instalacja zależności dla Unity Headless i Xvfb
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglu1-mesa libxmu6 libxi6 libgconf-2-4 libnss3 \
+    libxcursor1 libxrandr2 libxfixes3 libxrender1 \
+    libxtst6 mesa-utils libgl1-mesa-glx libasound2 \
+    libgtk2.0-0 libdrm2 xvfb && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir mlagents google-cloud-storage
+
+# Kopiujemy build Unity i konfigurację treningu
+COPY Unity/Builds/Cloud /app/game
+COPY config.yaml /app/config.yaml
+
+# Entrypoint z Xvfb
+RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
+    echo 'Xvfb :0 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &> /dev/null &' >> /app/entrypoint.sh && \
+    echo 'export DISPLAY=:0' >> /app/entrypoint.sh && \
+    echo 'sleep 2' >> /app/entrypoint.sh && \
+    echo 'exec "$@"' >> /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+# Domyślna komenda treningowa
+CMD ["mlagents-learn", "config.yaml", "--env=/app/game/TwojaGra.x86_64", "--run-id=test1", "--no-graphics"]

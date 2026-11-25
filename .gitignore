@@ -1,0 +1,56 @@
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+sysinfo.txt
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vs/
+.gradle/
+ExportedObj/
+*.apk
+*.aab
+*.unitypackage
+crashlytics-buildid.txt
+
+# Przykładowy projekt ML-Agents, nie część symulacji NaI
+/My project/
+
+# Wyniki treningu, wykresy i buildy lokalne
+/build/
+/results/
+/results_k8s/
+/wyniki_finalne/
+/trajektorie_wizualizacja/
+/trajektorie_wizualizacja_XY/
+/geant4_physics_result.png
+/geant4_physics_result_XY.png
+/geant4_physics_result_XZ.png
+/trajektorie_3d_projections.png
+/trajektorie_wynik.png
+*.onnx
+*.pt
+events.out.tfevents.*
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini

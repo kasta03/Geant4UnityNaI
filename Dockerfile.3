@@ -1,0 +1,80 @@
+FROM geant-layer-1 AS builder
+
+WORKDIR /src
+
+COPY CMakeLists.txt .
+COPY src ./src
+COPY include ./include
+
+RUN mkdir build && cd build && \
+    /bin/bash -c "source /opt/geant4/bin/geant4.sh && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release && \
+    make -j$(nproc)"
+
+FROM python-layer-2
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglu1-mesa \
+    libxmu6 \
+    libxi6 \
+    libgconf-2-4 \
+    libnss3 \
+    libxcursor1 \
+    libxrandr2 \
+    libxfixes3 \
+    libxrender1 \
+    libxtst6 \
+    mesa-utils \
+    libgl1-mesa-glx \
+    libglapi-mesa \
+    libasound2 \
+    libgtk2.0-0 \
+    libdrm2 \
+    xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir google-cloud-storage mlagents
+
+COPY --from=builder /src/build/Geant4Server /app/Geant4Server
+
+COPY Simulation/Builds /app/game
+
+COPY config.yaml /app/config.yaml
+
+COPY upload_results.py /app/upload_results.py
+
+RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
+    echo 'set -e' >> /app/entrypoint.sh && \
+    echo '' >> /app/entrypoint.sh && \
+    \
+    echo '# 1. Start Xvfb (Wirtualny serwer graficzny)' >> /app/entrypoint.sh && \
+    echo 'export DISPLAY=:0' >> /app/entrypoint.sh && \
+    echo 'Xvfb :0 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &> /dev/null &' >> /app/entrypoint.sh && \
+    echo 'sleep 1' >> /app/entrypoint.sh && \
+    \
+    echo '# 2. Ładowanie środowiska Geant4' >> /app/entrypoint.sh && \
+    echo 'source /opt/geant4/bin/geant4.sh' >> /app/entrypoint.sh && \
+    echo 'export G4FORCENUMBEROFTHREADS=1' >> /app/entrypoint.sh && \
+    \
+    echo '# 3. Uruchomienie Serwera Geant4 w tle' >> /app/entrypoint.sh && \
+    echo 'echo "[ENTRYPOINT] Starting Geant4 Server..."' >> /app/entrypoint.sh && \
+    echo '/app/Geant4Server &' >> /app/entrypoint.sh && \
+    echo 'GEANT_PID=$!' >> /app/entrypoint.sh && \
+    echo 'sleep 2' >> /app/entrypoint.sh && \
+    \
+    echo '# 4. Wykonanie komendy głównej (trening)' >> /app/entrypoint.sh && \
+    echo '"$@"' >> /app/entrypoint.sh && \
+    \
+    echo '# 5. Wysyłka wyników do chmury' >> /app/entrypoint.sh && \
+    echo 'echo "[ENTRYPOINT] Training finished. Starting upload..."' >> /app/entrypoint.sh && \
+    echo 'python3 /app/upload_results.py' >> /app/entrypoint.sh && \
+    \
+    echo 'kill $GEANT_PID' >> /app/entrypoint.sh
+
+RUN chmod +x /app/entrypoint.sh && \
+    chmod +x /app/Geant4Server && \
+    chmod -R +x /app/game
+
+ENTRYPOINT ["/app/entrypoint.sh"]
